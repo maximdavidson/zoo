@@ -2,25 +2,6 @@ import tkinter as tk
 from tkinter import messagebox
 import mysql.connector
 
-
-def show_animal_info():
-   animal_info_frame.pack_forget()  # Скрыть предыдущий фрейм (если есть)
-   # animal_info_frame.pack(pady=100)
-   animal_info_frame.place(x=20, y=50)
-   # animal_info_frame.pack(side='left', fill='y')
-
-
-    # Список полей информации
-   info_labels = ['Имя животного:', 'Вид:', 'Пол:', 'Возраст:', 'Клетка:', 'Статус:']
-
-    # Создание и расположение виджетов Label и Entry
-   for label_text in info_labels:
-      label = tk.Label(animal_info_frame, text=label_text, bg='lightgray')
-      label.pack(anchor='w', pady=5)
-
-      entry = tk.Entry(animal_info_frame, width=30)
-      entry.pack(anchor='w', pady=5)
-
 # Создание окна
 window = tk.Tk()
 window.resizable(width = False, height = False)
@@ -49,7 +30,7 @@ except mysql.connector.Error as err:
 btn_1 = tk.Button(window, text = 'Сотрудники', width = '20', height = '1', fg = 'black', bg = 'gray')
 btn_1.place(x = 20, y = 10)
 
-btn_2 = tk.Button(window, text = 'Животные', width = '20', height = '1', fg = 'black', bg = 'gray', command = show_animal_info)
+btn_2 = tk.Button(window, text = 'Животные', width = '20', height = '1', fg = 'black', bg = 'gray')
 btn_2.place(x = 200, y = 10)
 
 btn_3 = tk.Button(window, text = 'Поставщики', width = '20', height = '1', fg = 'black', bg = 'gray')
@@ -71,10 +52,6 @@ btn_find.place(x = 800, y = 100)
 btn_filter = tk.Button(window, text = 'Фильтрация', width = '20', height = '1', fg = 'black', bg = 'gray')
 btn_filter.place(x = 800, y = 140)
 
-
-
-# Фрейм для отображения информации о животных
-animal_info_frame = tk.Frame(window, bg='lightgray')
 
 
 window.mainloop()
