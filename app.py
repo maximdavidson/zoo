@@ -54,6 +54,29 @@ def add_employee():
     tk.Button(input_window, text='Submit', command=submit).grid(row=len(labels), column=1)
 
 
+def add_animal():
+    input_window = tk.Toplevel(window)
+    input_window.title('Добавить животных')
+    input_window.geometry('300x200')
+
+    labels = ['Вид', 'Имя', 'Гендер', 'Возраст', 'Пара', 'Статус']
+    entries = []
+
+    for i, label in enumerate(labels):
+        tk.Label(input_window, text=label).grid(row=i)
+        entries.append(tk.Entry(input_window))
+        entries[-1].grid(row=i, column=1) 
+
+    def submit():
+        animal_data = {label: entry.get() for label, entry in zip(labels, entries)}
+        cursor.execute('INSERT INTO Animal (kind, name, gender, age, pair, status) VALUES (%s, %s, %s, %s, %s, %s)',
+                (animal_data['Вид'], animal_data['Имя'], animal_data['Гендер'], animal_data['Возраст'], animal_data['Пара'], animal_data['Статус']))
+        db_connector.commit()
+        input_window.destroy()
+    
+    tk.Button(input_window, text='Submit', command=submit).grid(row = len(labels), column = 1)
+
+
 # Создаем таблицу
 tree = ttk.Treeview(window)
 tree['columns']=('one','two','three','four')
@@ -111,11 +134,31 @@ def delete_employee():
      # Удаляем строку из таблицы
      tree.delete(selected_item)
 
+
+current_mode = None  # переменная для отслеживания текущего режима
+
+def set_mode(mode):
+    global current_mode
+    current_mode = mode
+
+def set_mode_employee():
+    set_mode('employee')
+
+def set_mode_animal():
+    set_mode('animal')
+
+def add_data():
+    if current_mode == 'employee':
+        add_employee()
+    elif current_mode == 'animal':
+        add_animal()
+
+
 # Горизонтальные кнопки
-btn_1 = tk.Button(window, text = 'Сотрудники', width = '20', height = '1', fg = 'black', bg = 'gray', command=show_employees)
+btn_1 = tk.Button(window, text='Сотрудники', width='20', height='1', fg='black', bg='gray', command=lambda: (show_employees(), set_mode_employee()))
 btn_1.place(x = 20, y = 10)
 
-btn_2 = tk.Button(window, text = 'Животные', width = '20', height = '1', fg = 'black', bg = 'gray')
+btn_2 = tk.Button(window, text = 'Животные', width = '20', height = '1', fg = 'black', bg = 'gray', command=set_mode_animal)
 btn_2.place(x = 200, y = 10)
 
 btn_3 = tk.Button(window, text = 'Поставщики', width = '20', height = '1', fg = 'black', bg = 'gray')
@@ -126,7 +169,7 @@ btn_4.place(x = 600, y = 10)
 
 
 # Вертикальные кнопки
-btn_add = tk.Button(window, text = 'Добавить', width = '20', height = '1', fg = 'black', bg = 'gray', command=add_employee)
+btn_add = tk.Button(window, text = 'Добавить', width = '20', height = '1', fg = 'black', bg = 'gray', command=add_data)
 btn_add.place(x = 800, y = 20)
 
 btn_update = tk.Button(window, text = 'Обновить данные', width = '20', height = '1', fg = 'black', bg = 'gray', command=update_table)
