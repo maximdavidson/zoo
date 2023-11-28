@@ -76,29 +76,46 @@ def add_animal():
     
     tk.Button(input_window, text='Submit', command=submit).grid(row = len(labels), column = 1)
 
-
-
 # Создаем таблицу
-tree = ttk.Treeview(window)
-tree['columns']=('one','two','three','four','five')
-tree.column('#0', width=1, minwidth=1, stretch=tk.NO)
-tree.column('one', width=150, minwidth=150, stretch=tk.NO)
-tree.column('two', width=150, minwidth=150, stretch=tk.NO)
-tree.column('three', width=150, minwidth=100, stretch=tk.NO)
-tree.column('four', width=120, minwidth=80, stretch=tk.NO)
-tree.column('five', width=80, minwidth=80, stretch=tk.NO)
+tree_emp = ttk.Treeview(window)
+tree_emp['columns']=('one','two','three','four','five')
+tree_emp.column('#0', width=1, minwidth=1, stretch=tk.NO)
+tree_emp.column('one', width=150, minwidth=150, stretch=tk.NO)
+tree_emp.column('two', width=150, minwidth=150, stretch=tk.NO)
+tree_emp.column('three', width=150, minwidth=100, stretch=tk.NO)
+tree_emp.column('four', width=120, minwidth=80, stretch=tk.NO)
+tree_emp.column('five', width=80, minwidth=80, stretch=tk.NO)
 
-tree.heading('#0',text='ID',anchor=tk.W)
-tree.heading('one', text='Имя',anchor=tk.W)
-tree.heading('two', text='Фамилия',anchor=tk.W)
-tree.heading('three', text='Должность',anchor=tk.W)
-tree.heading('four', text='Доступ к клетке',anchor=tk.W)
-tree.heading('five', text='Категория',anchor=tk.W)
+tree_emp.heading('#0',text='ID',anchor=tk.W)
+tree_emp.heading('one', text='Имя',anchor=tk.W)
+tree_emp.heading('two', text='Фамилия',anchor=tk.W)
+tree_emp.heading('three', text='Должность',anchor=tk.W)
+tree_emp.heading('four', text='Доступ к клетке',anchor=tk.W)
+tree_emp.heading('five', text='Категория',anchor=tk.W)
+
+
+tree_anl = ttk.Treeview(window)
+tree_anl['columns']=('one','two','three','four','five', 'six')
+tree_anl.column('#0', width=1, minwidth=1, stretch=tk.NO)
+tree_anl.column('one', width=150, minwidth=150, stretch=tk.NO)
+tree_anl.column('two', width=150, minwidth=150, stretch=tk.NO)
+tree_anl.column('three', width=150, minwidth=100, stretch=tk.NO)
+tree_anl.column('four', width=120, minwidth=80, stretch=tk.NO)
+tree_anl.column('five', width=80, minwidth=80, stretch=tk.NO)
+tree_anl.column('six', width=80, minwidth=80, stretch=tk.NO)
+
+tree_anl.heading('#0',text='ID',anchor=tk.W)
+tree_anl.heading('one', text='Вид',anchor=tk.W)
+tree_anl.heading('two', text='Имя',anchor=tk.W)
+tree_anl.heading('three', text='Гендер',anchor=tk.W)
+tree_anl.heading('four', text='Возраст',anchor=tk.W)
+tree_anl.heading('five', text='Пара',anchor=tk.W)
+tree_anl.heading('six', text='Статус',anchor=tk.W)
 
 def show_employees():
     # Очищаем таблицу перед добавлением новых данных
-    for row in tree.get_children():
-        tree.delete(row)
+    for row in tree_emp.get_children():
+        tree_emp.delete(row)
 
     # Извлекаем данные из базы данных
     cursor.execute('SELECT * FROM Employee')
@@ -106,27 +123,29 @@ def show_employees():
 
     # Добавляем данные в таблицу
     for employee in employees:
-        tree.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4], employee[5]))
+        tree_emp.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4], employee[5]))
 
-    tree.place(x=10, y=80)
+    tree_emp.place(x=10, y=80)
+    tree_anl.place_forget()  # Скрываем таблицу с животными
 
 def show_animals():
-    for row in tree.get_children():
-        tree.delete(row)
+    for row in tree_anl.get_children():
+        tree_anl.delete(row)
     
     cursor.execute('SELECT * FROM Animals')
     animals = cursor.fetchall()
 
     for animal in animals:
-        tree.insert('', 0, text=animal[0], value=(animal[1], animal[2], animal[3], animal[4], animal[5], animal[6]))
+        tree_anl.insert('', 0, text=animal[0], value=(animal[1], animal[2], animal[3], animal[4], animal[5], animal[6]))
 
-    tree.place(x=10, y=80)
+    tree_anl.place(x=10, y=80)
+    tree_emp.place_forget()  # Скрываем таблицу с сотрудниками
 
 
 def update_employee_table():
     # Удаляем все текущие строки из таблицы
-    for row in tree.get_children():
-        tree.delete(row)
+    for row in tree_emp.get_children():
+        tree_emp.delete(row)
 
     # Извлекаем данные из базы данных
     cursor.execute('SELECT * FROM Employee')
@@ -134,12 +153,12 @@ def update_employee_table():
 
     # Добавляем данные в таблицу
     for employee in employees:
-        tree.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4], employee[5]))
+        tree_emp.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4], employee[5]))
 
 def update_animal_table():
     # Удаляем все текущие строки из таблицы
-    for row in tree.get_children():
-        tree.delete(row)
+    for row in tree_anl.get_children():
+        tree_anl.delete(row)
 
     # Извлекаем данные из базы данных
     cursor.execute('SELECT * FROM Animals')
@@ -147,45 +166,45 @@ def update_animal_table():
 
     # Добавляем данные в таблицу
     for animal in animals:
-        tree.insert('', 0, text=animal[0], values=(animal[1], animal[2], animal[3], animal[4], animal[5], animal[6]))
+        tree_anl.insert('', 0, text=animal[0], values=(animal[1], animal[2], animal[3], animal[4], animal[5], animal[6]))
 
 def delete_employee():
     # Получаем выбранный элемент в таблице
-    selected_item = tree.selection()
+    selected_item = tree_emp.selection()
 
     if not selected_item:
         messagebox.showinfo('Удаление.', 'Сначала выберете поле, а затем нажмите на кнопку удалить.')
         return
      
     # Получаем ID сотрудника из выбранной строки
-    employee_id = tree.item(selected_item, 'text')
+    employee_id = tree_emp.item(selected_item, 'text')
 
     # Удаляем сотрудника из базы данных
     cursor.execute('DELETE FROM Employee WHERE employeeId = %s', (employee_id,))
     db_connector.commit()
 
     # Удаляем строку из таблицы
-    tree.delete(selected_item)
+    tree_emp.delete(selected_item)
 
     # Снимаем выделение
-    tree.selection_remove(selected_item)
+    tree_emp.selection_remove(selected_item)
 
 def delete_animal():
-    selected_item = tree.selection()
+    selected_item = tree_anl.selection()
 
     if not selected_item:
         messagebox.showinfo('Удаление.', 'Сначала выберете поле, а затем нажмите на кнопку удалить.')
         return
     
-    animal_id = tree.item(selected_item, 'text')
+    animal_id = tree_anl.item(selected_item, 'text')
 
     cursor.execute('DELETE FROM Animals WHERE animalId = %s', (animal_id,))
     db_connector.commit()
 
-    tree.delete(selected_item)
+    tree_anl.delete(selected_item)
 
     # Снимаем выделение
-    tree.selection_remove(selected_item)
+    tree_anl.selection_remove(selected_item)
 
 
 current_mode = None  # переменная для отслеживания текущего режима
