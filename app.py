@@ -34,7 +34,7 @@ def add_employee():
     input_window.title('Добавить сотрудников')
     input_window.geometry('300x200')
 
-    labels = ['Имя', 'Фамилия', 'Должность', 'Доступ к клетке']
+    labels = ['Имя', 'Фамилия', 'Должность', 'Доступ к клетке', 'Категория']
     entries = []
 
     for i, label in enumerate(labels):
@@ -46,8 +46,8 @@ def add_employee():
         employee_data = {label: entry.get() for label, entry in zip(labels, entries)}
 
         # Добавляем данные в базу данных
-        cursor.execute('INSERT INTO Employee (firstName, lastName, position, access) VALUES (%s, %s, %s, %s)',
-               (employee_data['Имя'], employee_data['Фамилия'], employee_data['Должность'], employee_data['Доступ к клетке']))
+        cursor.execute('INSERT INTO Employee (firstName, lastName, position, access) VALUES (%s, %s, %s, %s, %s)',
+               (employee_data['Имя'], employee_data['Фамилия'], employee_data['Должность'], employee_data['Доступ к клетке'], employee_data['Категория']))
         db_connector.commit()
         input_window.destroy()
 
@@ -80,24 +80,25 @@ def add_animal():
 
 # Создаем таблицу
 tree = ttk.Treeview(window)
-tree['columns']=('one','two','three','four')
+tree['columns']=('one','two','three','four','five')
 tree.column('#0', width=1, minwidth=1, stretch=tk.NO)
 tree.column('one', width=150, minwidth=150, stretch=tk.NO)
 tree.column('two', width=150, minwidth=150, stretch=tk.NO)
 tree.column('three', width=150, minwidth=100, stretch=tk.NO)
-tree.column('four', width=80, minwidth=80, stretch=tk.NO)
+tree.column('four', width=120, minwidth=80, stretch=tk.NO)
+tree.column('five', width=80, minwidth=80, stretch=tk.NO)
 
 tree.heading('#0',text='ID',anchor=tk.W)
-tree.heading('one', text='First name',anchor=tk.W)
-tree.heading('two', text='Last name',anchor=tk.W)
-tree.heading('three', text='Position',anchor=tk.W)
-tree.heading('four', text='Access',anchor=tk.W)
+tree.heading('one', text='Имя',anchor=tk.W)
+tree.heading('two', text='Фамилия',anchor=tk.W)
+tree.heading('three', text='Должность',anchor=tk.W)
+tree.heading('four', text='Доступ к клетке',anchor=tk.W)
+tree.heading('five', text='Категория',anchor=tk.W)
 
 def show_employees():
     # Очищаем таблицу перед добавлением новых данных
     for row in tree.get_children():
         tree.delete(row)
-
 
     # Извлекаем данные из базы данных
     cursor.execute('SELECT * FROM Employee')
@@ -105,7 +106,7 @@ def show_employees():
 
     # Добавляем данные в таблицу
     for employee in employees:
-        tree.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4]))
+        tree.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4], employee[5]))
 
     tree.place(x=10, y=80)
 
@@ -133,7 +134,7 @@ def update_employee_table():
 
     # Добавляем данные в таблицу
     for employee in employees:
-        tree.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4]))
+        tree.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4], employee[5]))
 
 def update_animal_table():
     # Удаляем все текущие строки из таблицы
