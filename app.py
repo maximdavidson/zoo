@@ -27,14 +27,13 @@ except mysql.connector.Error as err:
    print(f'Error: {err}')
    messagebox.showerror('Error')
 
-
 def add_employee():
     # Создаем всплывающее окно для ввода данных
     input_window = tk.Toplevel(window)
     input_window.title('Добавить сотрудников')
     input_window.geometry('300x200')
 
-    labels = ['Имя', 'Фамилия', 'Должность', 'Доступ к клетке', 'Категория']
+    labels = ['Имя', 'Фамилия', 'Гендер', 'Возраст', 'Должность', 'Доступ к клетке', 'Категория', 'Зарплата']
     entries = []
 
     for i, label in enumerate(labels):
@@ -46,8 +45,8 @@ def add_employee():
         employee_data = {label: entry.get() for label, entry in zip(labels, entries)}
 
         # Добавляем данные в базу данных
-        cursor.execute('INSERT INTO Employee (firstName, lastName, position, access) VALUES (%s, %s, %s, %s, %s)',
-               (employee_data['Имя'], employee_data['Фамилия'], employee_data['Должность'], employee_data['Доступ к клетке'], employee_data['Категория']))
+        cursor.execute('INSERT INTO Employee (firstName, lastName, gender, age, position, access, category, salary) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
+               (employee_data['Имя'], employee_data['Фамилия'], employee_data['Гендер'], employee_data['Возраст'], employee_data['Должность'], employee_data['Доступ к клетке'], employee_data['Категория'], employee_data['Зарплата']))
         db_connector.commit()
         input_window.destroy()
 
@@ -78,20 +77,27 @@ def add_animal():
 
 # Создаем таблицу
 tree_emp = ttk.Treeview(window)
-tree_emp['columns']=('one','two','three','four','five')
+tree_emp['columns']=('one','two','three','four','five', 'six', 'seven', 'eight')
 tree_emp.column('#0', width=1, minwidth=1, stretch=tk.NO)
-tree_emp.column('one', width=150, minwidth=150, stretch=tk.NO)
-tree_emp.column('two', width=150, minwidth=150, stretch=tk.NO)
-tree_emp.column('three', width=150, minwidth=100, stretch=tk.NO)
-tree_emp.column('four', width=120, minwidth=80, stretch=tk.NO)
+tree_emp.column('one', width=110, minwidth=110, stretch=tk.NO)
+tree_emp.column('two', width=110, minwidth=110, stretch=tk.NO)
+tree_emp.column('three', width=100, minwidth=100, stretch=tk.NO)
+tree_emp.column('four', width=60, minwidth=80, stretch=tk.NO)
 tree_emp.column('five', width=80, minwidth=80, stretch=tk.NO)
+tree_emp.column('six', width=120, minwidth=80, stretch=tk.NO)
+tree_emp.column('seven', width=80, minwidth=80, stretch=tk.NO)
+tree_emp.column('eight', width=80, minwidth=80, stretch=tk.NO)
 
 tree_emp.heading('#0',text='ID',anchor=tk.W)
 tree_emp.heading('one', text='Имя',anchor=tk.W)
 tree_emp.heading('two', text='Фамилия',anchor=tk.W)
-tree_emp.heading('three', text='Должность',anchor=tk.W)
-tree_emp.heading('four', text='Доступ к клетке',anchor=tk.W)
-tree_emp.heading('five', text='Категория',anchor=tk.W)
+tree_emp.heading('three', text='Гендер',anchor=tk.W)
+tree_emp.heading('four', text='Возраст',anchor=tk.W)
+tree_emp.heading('five', text='Должность',anchor=tk.W)
+tree_emp.heading('six', text='Доступ к клетке',anchor=tk.W)
+tree_emp.heading('seven', text='Категория',anchor=tk.W)
+tree_emp.heading('eight', text='Зарплата',anchor=tk.W)
+
 
 
 tree_anl = ttk.Treeview(window)
@@ -123,7 +129,7 @@ def show_employees():
 
     # Добавляем данные в таблицу
     for employee in employees:
-        tree_emp.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4], employee[5]))
+        tree_emp.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4], employee[5], employee[6], employee[7], employee[8]))
 
     tree_emp.place(x=10, y=80)
     tree_anl.place_forget()  # Скрываем таблицу с животными
@@ -153,7 +159,7 @@ def update_employee_table():
 
     # Добавляем данные в таблицу
     for employee in employees:
-        tree_emp.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4], employee[5]))
+        tree_emp.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4], employee[5], employee[6], employee[7], employee[8]))
 
 def update_animal_table():
     # Удаляем все текущие строки из таблицы
@@ -206,6 +212,40 @@ def delete_animal():
     # Снимаем выделение
     tree_anl.selection_remove(selected_item)
 
+def search_employee():
+    search_params_window = tk.Toplevel(window)
+    search_params_window.title('Настройка параметров поиска')
+    search_params_window.geometry('300x200')
+
+    # Добавляем элементы управления для установки параметров поиска
+    tk.Label(search_params_window, text='Имя или Фамилия:').grid(row=0, column=0, padx=10, pady=10)
+    entry_name = tk.Entry(search_params_window)
+    entry_name.grid(row=0, column=1)
+
+    def execute_search():
+        # Получаем значение параметра поиска
+        search_name = entry_name.get()
+
+        # Выполняем запрос с учетом фильтров
+        cursor.execute('SELECT * FROM Employee WHERE firstName LIKE %s OR lastName LIKE %s', (f'%{search_name}%', f'%{search_name}%'))
+        search_results = cursor.fetchall()
+
+        # Очищаем таблицу перед добавлением результатов поиска
+        for row in tree_emp.get_children():
+            tree_emp.delete(row)
+
+        # Добавляем результаты поиска в таблицу
+        for result in search_results:
+            tree_emp.insert('', 0, text=result[0], values=(result[1], result[2], result[3], result[4], result[5], result[6], result[7], result[8]))
+
+        # Закрываем окно настройки параметров поиска
+        search_params_window.destroy()
+
+    # Добавляем кнопку для запуска поиска
+    tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=1, column=1, pady=10)
+
+
+
 
 current_mode = None  # переменная для отслеживания текущего режима
 
@@ -250,7 +290,7 @@ btn_update.place(x=800, y=60)
 btn_clean = tk.Button(window, text = 'Удалить', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda:(delete_animal() if current_mode == 'animal' else delete_employee()))
 btn_clean.place(x = 800, y = 100)
 
-btn_find = tk.Button(window, text = 'Искать', width = '20', height = '1', fg = 'black', bg = 'gray')
+btn_find = tk.Button(window, text = 'Искать', width = '20', height = '1', fg = 'black', bg = 'gray', command=search_employee)
 btn_find.place(x = 800, y = 140)
 
 btn_filter = tk.Button(window, text = 'Фильтрация', width = '20', height = '1', fg = 'black', bg = 'gray')
