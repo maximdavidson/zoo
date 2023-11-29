@@ -75,6 +75,29 @@ def add_animal():
     
     tk.Button(input_window, text='Submit', command=submit).grid(row = len(labels), column = 1)
 
+
+def add_suppliers():
+    input_window = tk.Toplevel(window)
+    input_window.title('Добавить поставщиков')
+    input_window.geometry('300x200')
+
+    labels = ['Имя', 'Тип корма', 'Период', 'Количество', 'Стоимость', 'Дата поставки']   
+    entries = []
+
+    for i, label in enumerate(labels):
+        tk.Label(input_window, text=label).grid(row=i)
+        entries.append(tk.Entry(input_window))
+        entries[-1].grid(row=i, column=1)
+
+    def submit():
+        suppliers_data = {label: entry.get() for label, entry in zip(labels, entries)}
+        cursor.execute('INSERT INTO Suppliers (organization_name, type_of_feed, period, quantity, price, delivery_time) VALUE (%s,%s,%s,%s,%s,%s)',
+                (suppliers_data['Имя'], suppliers_data['Тип корма'], suppliers_data['Период'], suppliers_data['Количество'], suppliers_data['Стоимость'], suppliers_data['Дата поставки']))
+        db_connector.commit()
+        input_window.destroy()
+
+    tk.Button(input_window, text='Submit', command=submit).grid(row = len(labels), column = 1)
+
 # Создаем таблицу
 tree_emp = ttk.Treeview(window)
 tree_emp['columns']=('one','two','three','four','five', 'six', 'seven', 'eight')
@@ -118,6 +141,26 @@ tree_anl.heading('four', text='Возраст',anchor=tk.W)
 tree_anl.heading('five', text='Пара',anchor=tk.W)
 tree_anl.heading('six', text='Статус',anchor=tk.W)
 
+
+
+tree_sup = ttk.Treeview(window)
+tree_sup['columns']=('one','two','three','four','five', 'six')
+tree_sup.column('#0', width=1, minwidth=1, stretch=tk.NO)
+tree_sup.column('one', width=150, minwidth=150, stretch=tk.NO)
+tree_sup.column('two', width=150, minwidth=150, stretch=tk.NO)
+tree_sup.column('three', width=150, minwidth=100, stretch=tk.NO)
+tree_sup.column('four', width=120, minwidth=80, stretch=tk.NO)
+tree_sup.column('five', width=80, minwidth=80, stretch=tk.NO)
+tree_sup.column('six', width=90, minwidth=80, stretch=tk.NO)
+
+tree_sup.heading('#0',text='ID',anchor=tk.W)
+tree_sup.heading('one', text='Имя',anchor=tk.W)
+tree_sup.heading('two', text='Тип корма',anchor=tk.W)
+tree_sup.heading('three', text='Период',anchor=tk.W)
+tree_sup.heading('four', text='Количество',anchor=tk.W)
+tree_sup.heading('five', text='Стоимость',anchor=tk.W)
+tree_sup.heading('six', text='Дата поставки',anchor=tk.W)
+
 def show_employees():
     # Очищаем таблицу перед добавлением новых данных
     for row in tree_emp.get_children():
@@ -147,6 +190,20 @@ def show_animals():
     tree_anl.place(x=10, y=80)
     tree_emp.place_forget()  # Скрываем таблицу с сотрудниками
 
+def show_suppliers():
+    for row in tree_sup.get_children():
+      tree_sup.delete(row)
+    
+    cursor.execute('SELECT * FROM Suppliers')
+    suppliers = cursor.fetchall()
+
+    for supplier in suppliers:
+        tree_sup.insert('', 0, text=supplier[0], value=(supplier[1], supplier[2], supplier[3], supplier[4], supplier[5], supplier[6]))
+
+    tree_sup.place(x=10, y=80)
+    tree_emp.place_forget()
+    tree_anl.place_forget()
+    
 
 def update_employee_table():
     # Удаляем все текущие строки из таблицы
@@ -326,11 +383,16 @@ def set_mode_employee():
 def set_mode_animal():
     set_mode('animal')
 
+def set_mode_suppliers():
+    set_mode('suppliers')
+
 def add_data():
     if current_mode == 'employee':
         add_employee()
     elif current_mode == 'animal':
         add_animal()
+    elif current_mode == 'suppliers':
+        add_suppliers()
 
 
 # Горизонтальные кнопки
@@ -340,7 +402,7 @@ btn_1.place(x = 20, y = 10)
 btn_2 = tk.Button(window, text = 'Животные', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: (show_animals(), set_mode_animal()))
 btn_2.place(x = 200, y = 10)
 
-btn_3 = tk.Button(window, text = 'Поставщики', width = '20', height = '1', fg = 'black', bg = 'gray')
+btn_3 = tk.Button(window, text = 'Поставщики', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: (show_suppliers(), set_mode_suppliers()))
 btn_3.place(x = 400, y = 10)
 
 btn_4 = tk.Button(window, text = 'Изолятор', width = '20', height = '1', fg = 'black', bg = 'gray')
