@@ -215,19 +215,41 @@ def delete_animal():
 def search_employee():
     search_params_window = tk.Toplevel(window)
     search_params_window.title('Настройка параметров поиска')
-    search_params_window.geometry('300x200')
+    search_params_window.geometry('350x250')
 
     # Добавляем элементы управления для установки параметров поиска
     tk.Label(search_params_window, text='Имя или Фамилия:').grid(row=0, column=0, padx=10, pady=10)
     entry_name = tk.Entry(search_params_window)
     entry_name.grid(row=0, column=1)
 
+    tk.Label(search_params_window, text='Возраст:').grid(row=1, column=0, padx=1, pady=15)
+    entry_age = tk.Entry(search_params_window)
+    entry_age.grid(row=1, column=1)
+
+    tk.Label(search_params_window, text='Зарплата:').grid(row=2, column=0, padx=1, pady=20)
+    entry_salary = tk.Entry(search_params_window)
+    entry_salary.grid(row=2, column=1)
+
     def execute_search():
         # Получаем значение параметра поиска
         search_name = entry_name.get()
+        search_age = entry_age.get()
+        search_salary = entry_salary.get()
 
         # Выполняем запрос с учетом фильтров
-        cursor.execute('SELECT * FROM Employee WHERE firstName LIKE %s OR lastName LIKE %s', (f'%{search_name}%', f'%{search_name}%'))
+        if not search_name and not search_age and not search_salary:
+        # If both fields are empty, fetch all records
+         cursor.execute('SELECT * FROM Employee')
+        elif not search_name and not search_salary:
+        # If at least one field is not empty, apply filters
+         cursor.execute('SELECT * FROM Employee WHERE age LIKE %s', (f'%{search_age}%',))
+        elif not search_age and not search_salary:
+         cursor.execute('SELECT * FROM Employee WHERE firstName LIKE %s OR lastName LIKE %s', (f'%{search_name}%', f'%{search_name}%'))
+        elif not search_name and not search_age:
+         cursor.execute('SELECT * FROM Employee WHERE salary LIKE %s', (f'%{search_salary}%',))
+        else:
+         cursor.execute('SELECT * FROM Employee WHERE firstName LIKE %s OR lastName LIKE %s OR age LIKE %s', (f'%{search_name}%', f'%{search_name}%', f'%{search_age}%', f'%{search_salary}'))  
+        
         search_results = cursor.fetchall()
 
         # Очищаем таблицу перед добавлением результатов поиска
@@ -242,8 +264,53 @@ def search_employee():
         search_params_window.destroy()
 
     # Добавляем кнопку для запуска поиска
-    tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=1, column=1, pady=10)
+    tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=3, column=1, pady=10)  
 
+
+def search_animal():
+    search_params_window = tk.Toplevel(window)
+    search_params_window.title('Настройка параметров поиска')
+    search_params_window.geometry('350x250')
+
+    tk.Label(search_params_window, text='Вид:').grid(row=0, column=0,padx=5, pady=10)
+    entry_kind = tk.Entry(search_params_window)
+    entry_kind.grid(row=0,column=1)
+
+    tk.Label(search_params_window, text='Гендер:').grid(row=1, column=0,padx=5, pady=15)
+    entry_gender = tk.Entry(search_params_window)
+    entry_gender.grid(row=1,column=1)
+
+    tk.Label(search_params_window, text='Возраст:').grid(row=2, column=0,padx=5, pady=20)
+    entry_age = tk.Entry(search_params_window)
+    entry_age.grid(row=2,column=1)
+
+    def execute_search():
+        search_kind = entry_kind.get()
+        search_gender = entry_gender.get()
+        search_age = entry_age.get()
+
+        if not search_age and not search_gender and not search_kind:
+            cursor.execute('SELECT * FROM Animals')
+        elif not search_gender and not search_age:
+            cursor.execute('SELECT * FROM Animals WHERE kind LIKE %s', (f'%{search_kind}%',))
+        elif not search_kind and not search_age:
+            cursor.execute('SELECT * FROM Animals WHERE gender LIKE %s', (f'%{search_gender}%',))
+        elif not search_kind and not search_gender:
+            cursor.execute('SELECT * FROM Animals WHERE age LIKE %s', (f'%{search_age}%',))
+        else:
+            cursor.execute('SELECT * FROM Animals WHERE name LIKE %s OR gender LIKE %s OR age LIKE %s', (f'%{search_kind}%', f'%{search_gender}', f'%{search_age}') )
+
+        search_results = cursor.fetchall()
+
+        for row in tree_anl.get_children():
+            tree_anl.delete(row)
+
+        for result in search_results:
+            tree_anl.insert('', 0, text=result[0], values=(result[1], result[2], result[3], result[4], result[5], result[6]))
+
+        search_params_window.destroy()
+    
+    tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=3, column=1, pady=10)  
 
 
 
@@ -290,7 +357,7 @@ btn_update.place(x=800, y=60)
 btn_clean = tk.Button(window, text = 'Удалить', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda:(delete_animal() if current_mode == 'animal' else delete_employee()))
 btn_clean.place(x = 800, y = 100)
 
-btn_find = tk.Button(window, text = 'Искать', width = '20', height = '1', fg = 'black', bg = 'gray', command=search_employee)
+btn_find = tk.Button(window, text = 'Искать', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda:(search_employee() if current_mode == 'emloyee' else search_animal()))
 btn_find.place(x = 800, y = 140)
 
 btn_filter = tk.Button(window, text = 'Фильтрация', width = '20', height = '1', fg = 'black', bg = 'gray')
