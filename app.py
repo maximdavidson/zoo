@@ -58,7 +58,7 @@ def add_animal():
     input_window.title('Добавить животных')
     input_window.geometry('300x200')
 
-    labels = ['Вид', 'Имя', 'Гендер', 'Возраст', 'Пара', 'Статус']
+    labels = ['Вид', 'Имя', 'Гендер', 'Возраст', 'Пара']
     entries = []
 
     for i, label in enumerate(labels):
@@ -68,12 +68,48 @@ def add_animal():
 
     def submit():
         animal_data = {label: entry.get() for label, entry in zip(labels, entries)}
-        cursor.execute('INSERT INTO Animals (kind, name, gender, age, pair, status) VALUES (%s, %s, %s, %s, %s, %s)',
-                (animal_data['Вид'], animal_data['Имя'], animal_data['Гендер'], animal_data['Возраст'], animal_data['Пара'], animal_data['Статус']))
+        cursor.execute('INSERT INTO Animals (kind, name, gender, age, pair) VALUES (%s, %s, %s, %s, %s)',
+                (animal_data['Вид'], animal_data['Имя'], animal_data['Гендер'], animal_data['Возраст'], animal_data['Пара']))
         db_connector.commit()
         input_window.destroy()
     
     tk.Button(input_window, text='Submit', command=submit).grid(row = len(labels), column = 1)
+
+
+def add_animal_health():
+    input_window = tk.Toplevel(window)
+    input_window.title('Добавить информацию о здоровье животного')
+    input_window.geometry('300x200')
+
+    labels = ['Болезнь', 'Прививка', 'Время в зоопарке', 'Количество потомства']
+    entries = []
+
+    for i, label in enumerate(labels):
+        tk.Label(input_window, text=label).grid(row=i)
+        entries.append(tk.Entry(input_window))
+        entries[-1].grid(row=i, column=1) 
+
+    # Создаем выпадающий список с именами животных
+    cursor.execute('SELECT animalId, name FROM Animals')
+    animals = cursor.fetchall()
+    animal_names = [animal[1] for animal in animals]
+    animal_var = tk.StringVar(input_window)
+    animal_var.set(animal_names[0])  # устанавливаем значение по умолчанию
+    animal_dropdown = tk.OptionMenu(input_window, animal_var, *animal_names)
+    animal_dropdown.grid(row=len(labels), column=1)
+
+    def submit():
+        health_data = {label: entry.get() for label, entry in zip(labels, entries)}
+        selected_animal_name = animal_var.get()
+        selected_animal_id = [animal[0] for animal in animals if animal[1] == selected_animal_name][0]
+        cursor.execute('INSERT INTO AnimalHealth (animalId, disease, vaccination, durationInZoo, offspringCount) VALUES (%s, %s, %s, %s, %s)',
+                (selected_animal_id, health_data['Болезнь'], health_data['Прививка'], health_data['Время в зоопарке'], health_data['Количество потомства']))
+        db_connector.commit()
+        input_window.destroy()
+    
+    tk.Button(input_window, text='Submit', command=submit).grid(row = len(labels) + 1, column = 1)
+
+
 
 
 def add_suppliers():
@@ -124,14 +160,13 @@ tree_emp.heading('eight', text='Зарплата',anchor=tk.W)
 
 
 tree_anl = ttk.Treeview(window)
-tree_anl['columns']=('one','two','three','four','five', 'six')
+tree_anl['columns']=('one','two','three','four','five')
 tree_anl.column('#0', width=1, minwidth=1, stretch=tk.NO)
 tree_anl.column('one', width=150, minwidth=150, stretch=tk.NO)
 tree_anl.column('two', width=150, minwidth=150, stretch=tk.NO)
 tree_anl.column('three', width=150, minwidth=100, stretch=tk.NO)
 tree_anl.column('four', width=120, minwidth=80, stretch=tk.NO)
 tree_anl.column('five', width=80, minwidth=80, stretch=tk.NO)
-tree_anl.column('six', width=80, minwidth=80, stretch=tk.NO)
 
 tree_anl.heading('#0',text='ID',anchor=tk.W)
 tree_anl.heading('one', text='Вид',anchor=tk.W)
@@ -139,7 +174,24 @@ tree_anl.heading('two', text='Имя',anchor=tk.W)
 tree_anl.heading('three', text='Гендер',anchor=tk.W)
 tree_anl.heading('four', text='Возраст',anchor=tk.W)
 tree_anl.heading('five', text='Пара',anchor=tk.W)
-tree_anl.heading('six', text='Статус',anchor=tk.W)
+
+
+
+tree_health = ttk.Treeview(window)
+tree_health['columns']=('one','two','three','four', 'five')
+tree_health.column('#0', width=1, minwidth=1, stretch=tk.NO)
+tree_health.column('one', width=150, minwidth=150, stretch=tk.NO)
+tree_health.column('two', width=150, minwidth=150, stretch=tk.NO)
+tree_health.column('three', width=150, minwidth=150, stretch=tk.NO)
+tree_health.column('four', width=150, minwidth=100, stretch=tk.NO)
+tree_health.column('five', width=150, minwidth=80, stretch=tk.NO)
+
+tree_health.heading('#0',text='ID',anchor=tk.W)
+tree_health.heading('one', text='ID Животного',anchor=tk.W)
+tree_health.heading('two', text='Болезнь',anchor=tk.W)
+tree_health.heading('three', text='Прививка',anchor=tk.W)
+tree_health.heading('four', text='Время в зоопарке',anchor=tk.W)
+tree_health.heading('five', text='Количество потомства',anchor=tk.W)
 
 
 
@@ -161,6 +213,8 @@ tree_sup.heading('four', text='Количество',anchor=tk.W)
 tree_sup.heading('five', text='Стоимость',anchor=tk.W)
 tree_sup.heading('six', text='Дата поставки',anchor=tk.W)
 
+
+
 def show_employees():
     # Очищаем таблицу перед добавлением новых данных
     for row in tree_emp.get_children():
@@ -175,7 +229,9 @@ def show_employees():
         tree_emp.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4], employee[5], employee[6], employee[7], employee[8]))
 
     tree_emp.place(x=10, y=80)
-    tree_anl.place_forget()  # Скрываем таблицу с животными
+    tree_anl.place_forget()
+    tree_sup.place_forget()
+    tree_health.place_forget()
 
 def show_animals():
     for row in tree_anl.get_children():
@@ -185,10 +241,27 @@ def show_animals():
     animals = cursor.fetchall()
 
     for animal in animals:
-        tree_anl.insert('', 0, text=animal[0], value=(animal[1], animal[2], animal[3], animal[4], animal[5], animal[6]))
+        tree_anl.insert('', 0, text=animal[0], value=(animal[1], animal[2], animal[3], animal[4], animal[5]))
 
     tree_anl.place(x=10, y=80)
-    tree_emp.place_forget()  # Скрываем таблицу с сотрудниками
+    tree_emp.place_forget() 
+    tree_sup.place_forget()
+    tree_health.place_forget()
+
+def show_animal_health():
+    for row in tree_health.get_children():
+        tree_health.delete(row)
+    
+    cursor.execute('SELECT * FROM AnimalHealth')
+    health_data = cursor.fetchall()
+
+    for health in health_data:
+        tree_health.insert('', 0, text=health[0], value=(health[1], health[2], health[3], health[4], health[5]))
+
+    tree_health.place(x=10, y=80)
+    tree_anl.place_forget()
+    tree_sup.place_forget()
+    tree_emp.place_forget()
 
 def show_suppliers():
     for row in tree_sup.get_children():
@@ -203,6 +276,7 @@ def show_suppliers():
     tree_sup.place(x=10, y=80)
     tree_emp.place_forget()
     tree_anl.place_forget()
+    tree_health.place_forget()
     
 
 def update_employee_table():
@@ -229,7 +303,7 @@ def update_animal_table():
 
     # Добавляем данные в таблицу
     for animal in animals:
-        tree_anl.insert('', 0, text=animal[0], values=(animal[1], animal[2], animal[3], animal[4], animal[5], animal[6]))
+        tree_anl.insert('', 0, text=animal[0], values=(animal[1], animal[2], animal[3], animal[4], animal[5]))
 
 def update_suppliers_table():
     for row in tree_sup.get_children():
@@ -391,7 +465,7 @@ def search_animal():
             tree_anl.delete(row)
 
         for result in search_results:
-            tree_anl.insert('', 0, text=result[0], values=(result[1], result[2], result[3], result[4], result[5], result[6]))
+            tree_anl.insert('', 0, text=result[0], values=(result[1], result[2], result[3], result[4], result[5]))
 
         search_params_window.destroy()
     
@@ -457,6 +531,9 @@ def set_mode_animal():
 def set_mode_suppliers():
     set_mode('suppliers')
 
+def set_mode_health():
+    set_mode('health')
+
 def add_data():
     if current_mode == 'employee':
         add_employee()
@@ -464,7 +541,8 @@ def add_data():
         add_animal()
     elif current_mode == 'suppliers':
         add_suppliers()
-
+    elif current_mode == 'health':
+        add_animal_health()
 
 # Горизонтальные кнопки
 btn_1 = tk.Button(window, text='Сотрудники', width='20', height='1', fg='black', bg='gray', command=lambda: (show_employees(), set_mode_employee()))
@@ -476,7 +554,7 @@ btn_2.place(x = 200, y = 10)
 btn_3 = tk.Button(window, text = 'Поставщики', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: (show_suppliers(), set_mode_suppliers()))
 btn_3.place(x = 400, y = 10)
 
-btn_4 = tk.Button(window, text = 'Изолятор', width = '20', height = '1', fg = 'black', bg = 'gray')
+btn_4 = tk.Button(window, text = 'Здоровье животных', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: (show_animal_health(), set_mode_health()))
 btn_4.place(x = 600, y = 10)
 
 
