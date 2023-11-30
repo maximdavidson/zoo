@@ -231,6 +231,17 @@ def update_animal_table():
     for animal in animals:
         tree_anl.insert('', 0, text=animal[0], values=(animal[1], animal[2], animal[3], animal[4], animal[5], animal[6]))
 
+def update_suppliers_table():
+    for row in tree_sup.get_children():
+        tree_sup.delete(row)
+
+    cursor.execute('SELECT * FROM Suppliers')
+    suppliers = cursor.fetchall()
+
+    for supplier in suppliers:
+        tree_sup.insert('', 0, text=supplier[0], value=(supplier[1], supplier[2], supplier[3], supplier[4], supplier[5], supplier[6]))
+
+
 def delete_employee():
     # Получаем выбранный элемент в таблице
     selected_item = tree_emp.selection()
@@ -268,6 +279,23 @@ def delete_animal():
 
     # Снимаем выделение
     tree_anl.selection_remove(selected_item)
+
+def delete_suppliers():
+    selected_item = tree_sup.selection()
+
+    if not selected_item:
+        messagebox.showinfo('Удаление.', 'Сначала выберете поле, а затем нажмите на кнопку удалить.')
+        return
+    
+    supplier_id = tree_sup.item(selected_item, 'text')
+
+    cursor.execute('DELETE FROM Suppliers WHERE suppliersId = %s', (supplier_id,))
+    db_connector.commit()
+
+    tree_sup.delete(selected_item)
+
+    # Снимаем выделение
+    tree_sup.selection_remove(selected_item)
 
 def search_employee():
     search_params_window = tk.Toplevel(window)
@@ -369,7 +397,50 @@ def search_animal():
     
     tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=3, column=1, pady=10)  
 
+def search_suppliers():
+    search_params_window = tk.Toplevel(window)
+    search_params_window.title('Настройка параметров поиска')
+    search_params_window.geometry('350x250')
 
+    tk.Label(search_params_window, text='Имя:').grid(row=0, column=0,padx=5, pady=10)
+    entry_name = tk.Entry(search_params_window)
+    entry_name.grid(row=0,column=1)
+
+    tk.Label(search_params_window, text='Тип Корма:').grid(row=1, column=0,padx=5, pady=15)
+    entry_type = tk.Entry(search_params_window)
+    entry_type.grid(row=1,column=1)
+
+    tk.Label(search_params_window, text='Стоимость:').grid(row=2, column=0,padx=5, pady=20)
+    entry_price = tk.Entry(search_params_window)
+    entry_price.grid(row=2,column=1)
+
+    def execute_search():
+        search_name = entry_name.get()
+        search_type = entry_type.get()
+        search_price = entry_price.get()
+
+        if not search_name and not search_type and not search_price:
+            cursor.execute('SELECT * FROM Suppliers')
+        elif not search_type and not search_price:
+            cursor.execute('SELECT * FROM Suppliers WHERE organization_name LIKE %s', (f'%{search_name}%',))
+        elif not search_name and not search_price:
+            cursor.execute('SELECT * FROM Suppliers WHERE type_of_feed LIKE %s', (f'%{search_type}%',))
+        elif not search_name and not search_type:
+            cursor.execute('SELECT * FROM Suppliers WHERE price LIKE %s', (f'%{search_price}%',))
+        else:
+            cursor.execute('SELECT * FROM Suppliers WHERE organization_name LIKE %s OR type_of_feed LIKE %s OR price LIKE %s', (f'%{search_name}%', f'%{search_type}', f'%{search_price}') )
+
+        search_results = cursor.fetchall()
+
+        for row in tree_sup.get_children():
+            tree_sup.delete(row)
+
+        for result in search_results:
+            tree_sup.insert('', 0, text=result[0], values=(result[1], result[2], result[3], result[4], result[5], result[6]))
+
+        search_params_window.destroy()
+    
+    tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=3, column=1, pady=10)  
 
 current_mode = None  # переменная для отслеживания текущего режима
 
@@ -413,13 +484,13 @@ btn_4.place(x = 600, y = 10)
 btn_add = tk.Button(window, text = 'Добавить', width = '20', height = '1', fg = 'black', bg = 'gray', command=add_data)
 btn_add.place(x = 800, y = 20)
 
-btn_update = tk.Button(window, text='Обновить данные', width='20', height='1', fg='black', bg='gray', command=lambda: (update_employee_table() if current_mode == 'employee' else update_animal_table()))
+btn_update = tk.Button(window, text='Обновить данные', width='20', height='1', fg='black', bg='gray', command=lambda: update_employee_table() if current_mode == 'employee' else (update_animal_table() if current_mode == 'animal' else update_suppliers_table()))
 btn_update.place(x=800, y=60)
 
-btn_clean = tk.Button(window, text = 'Удалить', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda:(delete_animal() if current_mode == 'animal' else delete_employee()))
+btn_clean = tk.Button(window, text = 'Удалить', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: delete_animal() if current_mode == 'animal' else (delete_employee() if current_mode == 'employee' else delete_suppliers()))
 btn_clean.place(x = 800, y = 100)
 
-btn_find = tk.Button(window, text = 'Искать', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda:(search_employee() if current_mode == 'emloyee' else search_animal()))
+btn_find = tk.Button(window, text = 'Искать', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: search_employee() if current_mode == 'emloyee' else (search_animal() if current_mode == 'animal' else search_suppliers()))
 btn_find.place(x = 800, y = 140)
 
 btn_filter = tk.Button(window, text = 'Фильтрация', width = '20', height = '1', fg = 'black', bg = 'gray')
