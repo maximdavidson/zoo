@@ -44,6 +44,10 @@ def add_employee():
     def submit():
         employee_data = {label: entry.get() for label, entry in zip(labels, entries)}
 
+        if not employee_data['Возраст'].isdigit() or not employee_data['Зарплата'].isdigit():
+         messagebox.showinfo('Ошибка', 'Возраст и зарплата должны быть числами.')
+         return
+
         # Добавляем данные в базу данных
         cursor.execute('INSERT INTO Employee (firstName, lastName, gender, age, position, access, category, salary) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
                (employee_data['Имя'], employee_data['Фамилия'], employee_data['Гендер'], employee_data['Возраст'], employee_data['Должность'], employee_data['Доступ к клетке'], employee_data['Категория'], employee_data['Зарплата']))
@@ -68,6 +72,11 @@ def add_animal():
 
     def submit():
         animal_data = {label: entry.get() for label, entry in zip(labels, entries)}
+
+        if not animal_data['Возраст'].isdigit():
+         messagebox.showinfo('Ошибка', 'Возраст должен быть числом.')
+         return
+        
         cursor.execute('INSERT INTO Animals (kind, name, gender, age, pair) VALUES (%s, %s, %s, %s, %s)',
                 (animal_data['Вид'], animal_data['Имя'], animal_data['Гендер'], animal_data['Возраст'], animal_data['Пара']))
         db_connector.commit()
@@ -100,6 +109,11 @@ def add_animal_health():
 
     def submit():
         health_data = {label: entry.get() for label, entry in zip(labels, entries)}
+
+        if not (health_data['Время в зоопарке'].isdigit() and health_data['Количество потомства'].isdigit()):
+         messagebox.showinfo('Ошибка', 'Время в зоопарке и количество потомства должны быть числами.')
+         return
+    
         selected_animal_name = animal_var.get()
         selected_animal_id = [animal[0] for animal in animals if animal[1] == selected_animal_name][0]
         cursor.execute('INSERT INTO AnimalHealth (animalId, disease, vaccination, durationInZoo, offspringCount) VALUES (%s, %s, %s, %s, %s)',
@@ -125,6 +139,11 @@ def add_suppliers():
 
     def submit():
         suppliers_data = {label: entry.get() for label, entry in zip(labels, entries)}
+
+        if not (suppliers_data['Количество'].isdigit() and suppliers_data['Стоимость'].isdigit()):
+         messagebox.showinfo('Ошибка', 'Количество и стоимость должны быть числами.')
+         return
+    
         cursor.execute('INSERT INTO Suppliers (organization_name, type_of_feed, period, quantity, price, delivery_time) VALUE (%s,%s,%s,%s,%s,%s)',
                 (suppliers_data['Имя'], suppliers_data['Тип корма'], suppliers_data['Период'], suppliers_data['Количество'], suppliers_data['Стоимость'], suppliers_data['Дата поставки']))
         db_connector.commit()
@@ -132,18 +151,17 @@ def add_suppliers():
 
     tk.Button(input_window, text='Submit', command=submit).grid(row = len(labels), column = 1)
 
+
 def add_EmployeeAccess():
     input_window = tk.Toplevel(window)
     input_window.title('Добавить доступ')
     input_window.geometry('300x200')
 
-    # Получить список всех работников и животных
     cursor.execute('SELECT employeeId, firstName, lastName FROM Employee')
     employees = cursor.fetchall()
     cursor.execute('SELECT animalId, name FROM Animals')
     animals = cursor.fetchall()
 
-    # Создать выпадающие списки с именами работников и животных
     employee_var = tk.StringVar()
     employee_dropdown = ttk.Combobox(input_window, textvariable=employee_var)
     employee_dropdown['values'] = [f'{id} - {first} {last}' for id, first, last in employees]
@@ -157,7 +175,6 @@ def add_EmployeeAccess():
     tk.Label(input_window, text='Животное:').grid(row=1)
 
     def submit():
-        # Получить ID работника и животного из выбранных элементов
         employee_id = int(employee_var.get().split(' - ')[0])
         animal_id = int(animal_var.get().split(' - ')[0])
 
@@ -166,6 +183,7 @@ def add_EmployeeAccess():
         input_window.destroy()
     
     tk.Button(input_window, text='Submit', command=submit).grid(row=2, column=1)
+
 
 # Создаем таблицу
 tree_emp = ttk.Treeview(window)
@@ -247,6 +265,7 @@ tree_sup.heading('five', text='Стоимость',anchor=tk.W)
 tree_sup.heading('six', text='Дата поставки',anchor=tk.W)
 
 
+
 tree_EA = ttk.Treeview(window)
 tree_EA['columns']=('one','two')
 tree_EA.column('#0', width=1, minwidth=1, stretch=tk.NO)
@@ -256,6 +275,7 @@ tree_EA.column('two', width=150, minwidth=150, stretch=tk.NO)
 tree_EA.heading('#0',text='ID',anchor=tk.W)
 tree_EA.heading('one', text='ID работника',anchor=tk.W)
 tree_EA.heading('two', text='ID животного',anchor=tk.W)
+
 
 def show_employees():
     # Очищаем таблицу перед добавлением новых данных
@@ -276,6 +296,7 @@ def show_employees():
     tree_health.place_forget()
     tree_EA.place_forget()
 
+
 def show_animals():
     for row in tree_anl.get_children():
         tree_anl.delete(row)
@@ -292,6 +313,7 @@ def show_animals():
     tree_health.place_forget()
     tree_EA.place_forget()
 
+
 def show_animal_health():
     for row in tree_health.get_children():
         tree_health.delete(row)
@@ -307,6 +329,7 @@ def show_animal_health():
     tree_sup.place_forget()
     tree_emp.place_forget()
     tree_EA.place_forget()
+
 
 def show_suppliers():
     for row in tree_sup.get_children():
@@ -360,31 +383,28 @@ def update_employee_table():
     for employee in employees:
         tree_emp.insert('', 0, text=employee[0], values=(employee[1], employee[2], employee[3], employee[4], employee[5], employee[6], employee[7], employee[8]))
 
+
 def update_animal_table():
-    # Удаляем все текущие строки из таблицы
     for row in tree_anl.get_children():
         tree_anl.delete(row)
 
-    # Извлекаем данные из базы данных
     cursor.execute('SELECT * FROM Animals')
     animals = cursor.fetchall()
 
-    # Добавляем данные в таблицу
     for animal in animals:
         tree_anl.insert('', 0, text=animal[0], values=(animal[1], animal[2], animal[3], animal[4], animal[5]))
 
+
 def update_animal_health_table():
-    # Удаляем все текущие строки из таблицы
     for row in tree_health.get_children():
         tree_health.delete(row)
 
-    # Извлекаем данные из базы данных
     cursor.execute('SELECT * FROM AnimalHealth')
     health = cursor.fetchall()
 
-    # Добавляем данные в таблицу
     for healthes in health:
         tree_health.insert('', 0, text=healthes[0], values=(healthes[1], healthes[2], healthes[3], healthes[4], healthes[5]))
+
 
 def update_suppliers_table():
     for row in tree_sup.get_children():
@@ -395,6 +415,7 @@ def update_suppliers_table():
 
     for supplier in suppliers:
         tree_sup.insert('', 0, text=supplier[0], value=(supplier[1], supplier[2], supplier[3], supplier[4], supplier[5], supplier[6]))
+
 
 def update_EmployeeAccess_table():
     for row in tree_EA.get_children():
@@ -410,6 +431,7 @@ def update_EmployeeAccess_table():
 
     for access in accesses:
         tree_EA.insert('', 0, text=access[0], value=(access[1] + ' ' + access[2], access[3] + ': ' + access[4]))
+
 
 def delete_employee():
     # Получаем выбранный элемент в таблице
@@ -432,6 +454,7 @@ def delete_employee():
     # Снимаем выделение
     tree_emp.selection_remove(selected_item)
 
+
 def delete_animal():
     selected_item = tree_anl.selection()
 
@@ -446,8 +469,8 @@ def delete_animal():
 
     tree_anl.delete(selected_item)
 
-    # Снимаем выделение
     tree_anl.selection_remove(selected_item)
+
 
 def delete_health():
     selected_item = tree_health.selection()
@@ -463,8 +486,8 @@ def delete_health():
 
     tree_health.delete(selected_item)
 
-    # Снимаем выделение
     tree_health.selection_remove(selected_item)
+
 
 def delete_suppliers():
     selected_item = tree_sup.selection()
@@ -480,8 +503,8 @@ def delete_suppliers():
 
     tree_sup.delete(selected_item)
 
-    # Снимаем выделение
     tree_sup.selection_remove(selected_item)
+
 
 def delete_EmployeeAccess():
     selected_item = tree_EA.selection()
@@ -497,8 +520,8 @@ def delete_EmployeeAccess():
 
     tree_EA.delete(selected_item)
 
-    # Снимаем выделение
     tree_EA.selection_remove(selected_item)
+
 
 def search_employee():
     search_params_window = tk.Toplevel(window)
@@ -600,6 +623,7 @@ def search_animal():
     
     tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=3, column=1, pady=10)  
 
+
 def search_health():
     search_params_window = tk.Toplevel(window)
     search_params_window.title('Настройка параметров поиска')
@@ -631,6 +655,7 @@ def search_health():
         search_params_window.destroy()
     
     tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=1, column=1, pady=10)  
+
 
 def search_suppliers():
     search_params_window = tk.Toplevel(window)
@@ -676,6 +701,7 @@ def search_suppliers():
         search_params_window.destroy()
     
     tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=3, column=1, pady=10) 
+
 
 def search_EmployeeAccess():
     search_params_window = tk.Toplevel(window)
@@ -776,8 +802,6 @@ btn_clean.place(x = 1000, y = 100)
 btn_find = tk.Button(window, text = 'Искать', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: search_employee() if current_mode == 'employee' else (search_animal() if current_mode == 'animal' else (search_suppliers() if current_mode == 'suppliers' else (search_health() if current_mode == 'health' else search_EmployeeAccess()))))
 btn_find.place(x = 1000, y = 140)
 
-# btn_filter = tk.Button(window, text = 'Фильтрация', width = '20', height = '1', fg = 'black', bg = 'gray')
-# btn_filter.place(x = 1000, y = 180)
 
 
 window.mainloop()
