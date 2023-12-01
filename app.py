@@ -7,7 +7,7 @@ import mysql.connector
 window = tk.Tk()
 window.resizable(width = False, height = False)
 window.title('Your ZOO')
-window.geometry('1000x500')
+window.geometry('1200x520')
 window['bg'] = 'gray'
 
 
@@ -110,7 +110,6 @@ def add_animal_health():
     tk.Button(input_window, text='Submit', command=submit).grid(row = len(labels) + 1, column = 1)
 
 
-
 def add_suppliers():
     input_window = tk.Toplevel(window)
     input_window.title('Добавить поставщиков')
@@ -132,6 +131,41 @@ def add_suppliers():
         input_window.destroy()
 
     tk.Button(input_window, text='Submit', command=submit).grid(row = len(labels), column = 1)
+
+def add_EmployeeAccess():
+    input_window = tk.Toplevel(window)
+    input_window.title('Добавить доступ')
+    input_window.geometry('300x200')
+
+    # Получить список всех работников и животных
+    cursor.execute('SELECT employeeId, firstName, lastName FROM Employee')
+    employees = cursor.fetchall()
+    cursor.execute('SELECT animalId, name FROM Animals')
+    animals = cursor.fetchall()
+
+    # Создать выпадающие списки с именами работников и животных
+    employee_var = tk.StringVar()
+    employee_dropdown = ttk.Combobox(input_window, textvariable=employee_var)
+    employee_dropdown['values'] = [f'{id} - {first} {last}' for id, first, last in employees]
+    employee_dropdown.grid(row=0, column=1)
+    tk.Label(input_window, text='Работник:').grid(row=0)
+
+    animal_var = tk.StringVar()
+    animal_dropdown = ttk.Combobox(input_window, textvariable=animal_var)
+    animal_dropdown['values'] = [f'{id} - {name}' for id, name in animals]
+    animal_dropdown.grid(row=1, column=1)
+    tk.Label(input_window, text='Животное:').grid(row=1)
+
+    def submit():
+        # Получить ID работника и животного из выбранных элементов
+        employee_id = int(employee_var.get().split(' - ')[0])
+        animal_id = int(animal_var.get().split(' - ')[0])
+
+        cursor.execute('INSERT INTO EmployeeAccess (employeeId, animalId) VALUES (%s, %s)', (employee_id, animal_id))
+        db_connector.commit()
+        input_window.destroy()
+    
+    tk.Button(input_window, text='Submit', command=submit).grid(row=2, column=1)
 
 # Создаем таблицу
 tree_emp = ttk.Treeview(window)
@@ -213,6 +247,15 @@ tree_sup.heading('five', text='Стоимость',anchor=tk.W)
 tree_sup.heading('six', text='Дата поставки',anchor=tk.W)
 
 
+tree_EA = ttk.Treeview(window)
+tree_EA['columns']=('one','two')
+tree_EA.column('#0', width=1, minwidth=1, stretch=tk.NO)
+tree_EA.column('one', width=150, minwidth=150, stretch=tk.NO)
+tree_EA.column('two', width=150, minwidth=150, stretch=tk.NO)
+
+tree_EA.heading('#0',text='ID',anchor=tk.W)
+tree_EA.heading('one', text='ID работника',anchor=tk.W)
+tree_EA.heading('two', text='ID животного',anchor=tk.W)
 
 def show_employees():
     # Очищаем таблицу перед добавлением новых данных
@@ -231,6 +274,7 @@ def show_employees():
     tree_anl.place_forget()
     tree_sup.place_forget()
     tree_health.place_forget()
+    tree_EA.place_forget()
 
 def show_animals():
     for row in tree_anl.get_children():
@@ -246,6 +290,7 @@ def show_animals():
     tree_emp.place_forget() 
     tree_sup.place_forget()
     tree_health.place_forget()
+    tree_EA.place_forget()
 
 def show_animal_health():
     for row in tree_health.get_children():
@@ -261,6 +306,7 @@ def show_animal_health():
     tree_anl.place_forget()
     tree_sup.place_forget()
     tree_emp.place_forget()
+    tree_EA.place_forget()
 
 def show_suppliers():
     for row in tree_sup.get_children():
@@ -276,6 +322,29 @@ def show_suppliers():
     tree_emp.place_forget()
     tree_anl.place_forget()
     tree_health.place_forget()
+    tree_EA.place_forget()
+
+def show_EmployeeAccess():
+    for row in tree_EA.get_children():
+      tree_EA.delete(row)
+    
+    cursor.execute('''
+        SELECT EmployeeAccessID, E.firstName, E.lastName, A.kind, A.name 
+        FROM EmployeeAccess EA
+        JOIN Employee E ON EA.employeeId = E.employeeId
+        JOIN Animals A ON EA.animalId = A.animalId
+    ''')
+    accesses = cursor.fetchall()
+
+    for access in accesses:
+        tree_EA.insert('', 0, text=access[0], value=(access[1], access[2], access[3], access[4]))
+
+    tree_EA.place(x=10, y=80)
+    
+    tree_sup.place_forget()
+    tree_anl.place_forget()
+    tree_health.place_forget()
+    tree_emp.place_forget()
     
 
 def update_employee_table():
@@ -327,6 +396,20 @@ def update_suppliers_table():
     for supplier in suppliers:
         tree_sup.insert('', 0, text=supplier[0], value=(supplier[1], supplier[2], supplier[3], supplier[4], supplier[5], supplier[6]))
 
+def update_EmployeeAccess_table():
+    for row in tree_EA.get_children():
+        tree_EA.delete(row)
+
+    cursor.execute('''
+        SELECT EmployeeAccessID, E.firstName, E.lastName, A.kind, A.name 
+        FROM EmployeeAccess EA
+        JOIN Employee E ON EA.employeeId = E.employeeId
+        JOIN Animals A ON EA.animalId = A.animalId
+    ''')
+    accesses = cursor.fetchall()
+
+    for access in accesses:
+        tree_EA.insert('', 0, text=access[0], value=(access[1] + ' ' + access[2], access[3] + ': ' + access[4]))
 
 def delete_employee():
     # Получаем выбранный элемент в таблице
@@ -399,6 +482,23 @@ def delete_suppliers():
 
     # Снимаем выделение
     tree_sup.selection_remove(selected_item)
+
+def delete_EmployeeAccess():
+    selected_item = tree_EA.selection()
+
+    if not selected_item:
+        messagebox.showinfo('Удаление.', 'Сначала выберете поле, а затем нажмите на кнопку удалить.')
+        return
+    
+    access_id = tree_EA.item(selected_item, 'text')
+
+    cursor.execute('DELETE FROM EmployeeAccess WHERE EmployeeAccessID = %s', (access_id,))
+    db_connector.commit()
+
+    tree_EA.delete(selected_item)
+
+    # Снимаем выделение
+    tree_EA.selection_remove(selected_item)
 
 def search_employee():
     search_params_window = tk.Toplevel(window)
@@ -575,7 +675,42 @@ def search_suppliers():
 
         search_params_window.destroy()
     
-    tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=3, column=1, pady=10)  
+    tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=3, column=1, pady=10) 
+
+def search_EmployeeAccess():
+    search_params_window = tk.Toplevel(window)
+    search_params_window.title('Настройка параметров поиска')
+    search_params_window.geometry('350x250')
+
+    tk.Label(search_params_window, text='Имя работника:').grid(row=0, column=0,padx=5, pady=10)
+    entry_name = tk.Entry(search_params_window)
+    entry_name.grid(row=0,column=1)
+
+    def execute_search():
+        search_name = entry_name.get()
+
+        if search_name:
+            cursor.execute('''
+    SELECT EmployeeAccessID, E.firstName, E.lastName, A.kind, A.name 
+    FROM EmployeeAccess EA
+    JOIN Employee E ON EA.employeeId = E.employeeId
+    JOIN Animals A ON EA.animalId = A.animalId
+    WHERE E.firstName LIKE %s OR E.lastName LIKE %s
+''', (f'%{search_name}%', f'%{search_name}%'))
+
+        search_results = cursor.fetchall()
+
+        for row in tree_EA.get_children():
+            tree_EA.delete(row)
+
+        for result in search_results:
+            tree_EA.insert('', 0, text=result[0], values=(result[1] + ' ' + result[2], result[3] + ': ' + result[4]))
+
+        search_params_window.destroy()
+    
+    tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=1, column=1, pady=10)
+
+
 
 current_mode = None  # переменная для отслеживания текущего режима
 
@@ -595,6 +730,9 @@ def set_mode_suppliers():
 def set_mode_health():
     set_mode('health')
 
+def set_mode_EmployeeAccess():
+    set_mode('EmployeeAccess')
+
 def add_data():
     if current_mode == 'employee':
         add_employee()
@@ -604,6 +742,9 @@ def add_data():
         add_suppliers()
     elif current_mode == 'health':
         add_animal_health()
+    elif current_mode == 'EmployeeAccess':
+        add_EmployeeAccess()
+
 
 # Горизонтальные кнопки
 btn_1 = tk.Button(window, text='Сотрудники', width='20', height='1', fg='black', bg='gray', command=lambda: (show_employees(), set_mode_employee()))
@@ -615,25 +756,28 @@ btn_2.place(x = 200, y = 10)
 btn_3 = tk.Button(window, text = 'Поставщики', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: (show_suppliers(), set_mode_suppliers()))
 btn_3.place(x = 400, y = 10)
 
-btn_4 = tk.Button(window, text = 'Здоровье животных', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: (show_animal_health(), set_mode_health()))
+btn_4 = tk.Button(window, text = 'Клинические данные', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: (show_animal_health(), set_mode_health()))
 btn_4.place(x = 600, y = 10)
+
+btn_5 = tk.Button(window, text = 'Доступ', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: (show_EmployeeAccess(), set_mode_EmployeeAccess()))
+btn_5.place(x = 800, y = 10)
 
 
 # Вертикальные кнопки
 btn_add = tk.Button(window, text = 'Добавить', width = '20', height = '1', fg = 'black', bg = 'gray', command=add_data)
-btn_add.place(x = 800, y = 20)
+btn_add.place(x = 1000, y = 20)
 
-btn_update = tk.Button(window, text='Обновить данные', width='20', height='1', fg='black', bg='gray', command=lambda: update_employee_table() if current_mode == 'employee' else (update_animal_table() if current_mode == 'animal' else (update_suppliers_table() if current_mode == 'suppliers' else update_animal_health_table())))
-btn_update.place(x=800, y=60)
+btn_update = tk.Button(window, text='Обновить данные', width='20', height='1', fg='black', bg='gray', command=lambda: update_employee_table() if current_mode == 'employee' else (update_animal_table() if current_mode == 'animal' else (update_suppliers_table() if current_mode == 'suppliers' else (update_animal_health_table() if current_mode == 'health' else update_EmployeeAccess_table()))))
+btn_update.place(x=1000, y=60)
 
-btn_clean = tk.Button(window, text = 'Удалить', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: delete_animal() if current_mode == 'animal' else (delete_employee() if current_mode == 'employee' else (delete_suppliers() if current_mode == 'suppliers' else delete_health())))
-btn_clean.place(x = 800, y = 100)
+btn_clean = tk.Button(window, text = 'Удалить', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: delete_animal() if current_mode == 'animal' else (delete_employee() if current_mode == 'employee' else (delete_suppliers() if current_mode == 'suppliers' else (delete_health() if current_mode == 'health' else delete_EmployeeAccess()))))
+btn_clean.place(x = 1000, y = 100)
 
-btn_find = tk.Button(window, text = 'Искать', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: search_employee() if current_mode == 'employee' else (search_animal() if current_mode == 'animal' else (search_suppliers() if current_mode == 'suppliers' else search_health())))
-btn_find.place(x = 800, y = 140)
+btn_find = tk.Button(window, text = 'Искать', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: search_employee() if current_mode == 'employee' else (search_animal() if current_mode == 'animal' else (search_suppliers() if current_mode == 'suppliers' else (search_health() if current_mode == 'health' else search_EmployeeAccess()))))
+btn_find.place(x = 1000, y = 140)
 
-btn_filter = tk.Button(window, text = 'Фильтрация', width = '20', height = '1', fg = 'black', bg = 'gray')
-btn_filter.place(x = 800, y = 180)
+# btn_filter = tk.Button(window, text = 'Фильтрация', width = '20', height = '1', fg = 'black', bg = 'gray')
+# btn_filter.place(x = 1000, y = 180)
 
 
 window.mainloop()
