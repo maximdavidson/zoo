@@ -111,7 +111,6 @@ def add_animal_health():
 
 
 
-
 def add_suppliers():
     input_window = tk.Toplevel(window)
     input_window.title('Добавить поставщиков')
@@ -187,7 +186,7 @@ tree_health.column('four', width=150, minwidth=100, stretch=tk.NO)
 tree_health.column('five', width=150, minwidth=80, stretch=tk.NO)
 
 tree_health.heading('#0',text='ID',anchor=tk.W)
-tree_health.heading('one', text='ID Животного',anchor=tk.W)
+tree_health.heading('one', text='Имя животного',anchor=tk.W)
 tree_health.heading('two', text='Болезнь',anchor=tk.W)
 tree_health.heading('three', text='Прививка',anchor=tk.W)
 tree_health.heading('four', text='Время в зоопарке',anchor=tk.W)
@@ -252,7 +251,7 @@ def show_animal_health():
     for row in tree_health.get_children():
         tree_health.delete(row)
     
-    cursor.execute('SELECT * FROM AnimalHealth')
+    cursor.execute('SELECT AnimalHealth.healthId, Animals.name, AnimalHealth.disease, AnimalHealth.vaccination, AnimalHealth.durationInZoo, AnimalHealth.offspringCount FROM AnimalHealth INNER JOIN Animals ON AnimalHealth.animalId = Animals.animalId;')
     health_data = cursor.fetchall()
 
     for health in health_data:
@@ -305,6 +304,19 @@ def update_animal_table():
     for animal in animals:
         tree_anl.insert('', 0, text=animal[0], values=(animal[1], animal[2], animal[3], animal[4], animal[5]))
 
+def update_animal_health_table():
+    # Удаляем все текущие строки из таблицы
+    for row in tree_health.get_children():
+        tree_health.delete(row)
+
+    # Извлекаем данные из базы данных
+    cursor.execute('SELECT * FROM AnimalHealth')
+    health = cursor.fetchall()
+
+    # Добавляем данные в таблицу
+    for healthes in health:
+        tree_health.insert('', 0, text=healthes[0], values=(healthes[1], healthes[2], healthes[3], healthes[4], healthes[5]))
+
 def update_suppliers_table():
     for row in tree_sup.get_children():
         tree_sup.delete(row)
@@ -353,6 +365,23 @@ def delete_animal():
 
     # Снимаем выделение
     tree_anl.selection_remove(selected_item)
+
+def delete_health():
+    selected_item = tree_health.selection()
+
+    if not selected_item:
+        messagebox.showinfo('Удаление.', 'Сначала выберете поле, а затем нажмите на кнопку удалить.')
+        return
+    
+    health_id = tree_health.item(selected_item, 'text')
+
+    cursor.execute('DELETE FROM AnimalHealth WHERE healthId = %s', (health_id,))
+    db_connector.commit()
+
+    tree_health.delete(selected_item)
+
+    # Снимаем выделение
+    tree_health.selection_remove(selected_item)
 
 def delete_suppliers():
     selected_item = tree_sup.selection()
@@ -471,6 +500,38 @@ def search_animal():
     
     tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=3, column=1, pady=10)  
 
+def search_health():
+    search_params_window = tk.Toplevel(window)
+    search_params_window.title('Настройка параметров поиска')
+    search_params_window.geometry('350x250')
+
+    tk.Label(search_params_window, text='Имя животного:').grid(row=0, column=0,padx=5, pady=10)
+    entry_name = tk.Entry(search_params_window)
+    entry_name.grid(row=0,column=1)
+
+    def execute_search():
+        search_name = entry_name.get()
+
+        if search_name:
+            cursor.execute('''
+    SELECT AnimalHealth.healthId, Animals.name, AnimalHealth.disease, AnimalHealth.vaccination, AnimalHealth.durationInZoo, AnimalHealth.offspringCount
+    FROM AnimalHealth
+    INNER JOIN Animals ON AnimalHealth.animalId = Animals.animalId
+    WHERE Animals.name LIKE %s
+''', (f'%{search_name}%',))
+
+        search_results = cursor.fetchall()
+
+        for row in tree_health.get_children():
+            tree_health.delete(row)
+
+        for result in search_results:
+            tree_health.insert('', 0, text=result[0], values=(result[1], result[2], result[3], result[4], result[5]))
+
+        search_params_window.destroy()
+    
+    tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=1, column=1, pady=10)  
+
 def search_suppliers():
     search_params_window = tk.Toplevel(window)
     search_params_window.title('Настройка параметров поиска')
@@ -562,13 +623,13 @@ btn_4.place(x = 600, y = 10)
 btn_add = tk.Button(window, text = 'Добавить', width = '20', height = '1', fg = 'black', bg = 'gray', command=add_data)
 btn_add.place(x = 800, y = 20)
 
-btn_update = tk.Button(window, text='Обновить данные', width='20', height='1', fg='black', bg='gray', command=lambda: update_employee_table() if current_mode == 'employee' else (update_animal_table() if current_mode == 'animal' else update_suppliers_table()))
+btn_update = tk.Button(window, text='Обновить данные', width='20', height='1', fg='black', bg='gray', command=lambda: update_employee_table() if current_mode == 'employee' else (update_animal_table() if current_mode == 'animal' else (update_suppliers_table() if current_mode == 'suppliers' else update_animal_health_table())))
 btn_update.place(x=800, y=60)
 
-btn_clean = tk.Button(window, text = 'Удалить', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: delete_animal() if current_mode == 'animal' else (delete_employee() if current_mode == 'employee' else delete_suppliers()))
+btn_clean = tk.Button(window, text = 'Удалить', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: delete_animal() if current_mode == 'animal' else (delete_employee() if current_mode == 'employee' else (delete_suppliers() if current_mode == 'suppliers' else delete_health())))
 btn_clean.place(x = 800, y = 100)
 
-btn_find = tk.Button(window, text = 'Искать', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: search_employee() if current_mode == 'emloyee' else (search_animal() if current_mode == 'animal' else search_suppliers()))
+btn_find = tk.Button(window, text = 'Искать', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: search_employee() if current_mode == 'employee' else (search_animal() if current_mode == 'animal' else (search_suppliers() if current_mode == 'suppliers' else search_health())))
 btn_find.place(x = 800, y = 140)
 
 btn_filter = tk.Button(window, text = 'Фильтрация', width = '20', height = '1', fg = 'black', bg = 'gray')
