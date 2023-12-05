@@ -264,7 +264,7 @@ tree_emp.column('three', width=100, minwidth=100, stretch=tk.NO)
 tree_emp.column('four', width=60, minwidth=80, stretch=tk.NO)
 tree_emp.column('five', width=150, minwidth=80, stretch=tk.NO)
 tree_emp.column('six', width=120, minwidth=80, stretch=tk.NO)
-tree_emp.column('seven', width=120, minwidth=80, stretch=tk.NO)
+tree_emp.column('seven', width=200, minwidth=80, stretch=tk.NO)
 tree_emp.column('eight', width=80, minwidth=80, stretch=tk.NO)
 
 tree_emp.heading('#0',text='ID',anchor=tk.W)
@@ -806,6 +806,219 @@ def search_EmployeeAccess():
     
     tk.Button(search_params_window, text='Искать', command=execute_search).grid(row=1, column=1, pady=10)
 
+
+def edit_item(event):
+    # Получаем выбранную строку
+    selected_item = tree_emp.selection()[0]
+    # Создаем новое окно для ввода данных
+    edit_window = tk.Toplevel(window)
+    edit_window.title('Изменить данные')
+    # Создаем поле для ввода нового значения
+    new_value_entry = tk.Entry(edit_window)
+    new_value_entry.pack()
+
+    def submit():
+    # Получаем новое значение из поля ввода
+     new_value = new_value_entry.get()
+    # Получаем выбранную колонку
+     selected_column = tree_emp.identify_column(event.x)
+    # Изменяем значение в выбранной ячейке
+     tree_emp.set(selected_item, selected_column, new_value)
+    # Получаем ID выбранного сотрудника
+     employee_id = tree_emp.item(selected_item, 'text')
+    # Определяем, какое поле в базе данных нужно обновить
+     db_field = ''
+     if selected_column == '#1':
+      db_field = 'firstName'
+     elif selected_column == '#2':
+      db_field = 'lastName'
+     elif selected_column == '#3':
+      db_field = 'gender'
+     elif selected_column == '#4':
+      db_field = 'age'
+     elif selected_column == '#5':
+      db_field = 'position'
+     elif selected_column == '#6':
+      db_field = 'access'
+     elif selected_column == '#7':
+      db_field = 'category'
+     elif selected_column == '#8':
+      db_field = 'salary'
+
+     # Выполняем SQL-запрос для обновления данных в базе данных
+     cursor.execute(f'UPDATE Employee SET {db_field} = %s WHERE employeeId = %s', (new_value, employee_id))
+     db_connector.commit()
+    
+     # Закрываем окно
+     edit_window.destroy()
+    
+    # Создаем кнопку для подтверждения изменений
+    submit_button = tk.Button(edit_window, text='Submit', command=submit)
+    submit_button.pack()
+
+# Привязываем функцию edit_item к событию двойного клика
+tree_emp.bind('<Double-1>', edit_item)
+
+
+def edit_item(event):
+    # Получаем выбранную строку
+    selected_item = tree_anl.selection()[0]
+    
+    # Создаем новое окно для ввода данных
+    edit_window = tk.Toplevel(window)
+    edit_window.title('Изменить данные')
+    
+    # Создаем поле для ввода нового значения
+    new_value_entry = tk.Entry(edit_window)
+    new_value_entry.pack()
+    
+    def submit():
+        # Получаем новое значение из поля ввода
+        new_value = new_value_entry.get()
+        
+        # Получаем выбранную колонку
+        selected_column = tree_anl.identify_column(event.x)
+        
+        # Изменяем значение в выбранной ячейке
+        tree_anl.set(selected_item, selected_column, new_value)
+        
+        # Получаем ID выбранного животного
+        animal_id = tree_anl.item(selected_item, 'text')
+        
+        # Определяем, какое поле в базе данных нужно обновить
+        db_field = ''
+        if selected_column == '#1':
+            db_field = 'kind'
+        elif selected_column == '#2':
+            db_field = 'name'
+        elif selected_column == '#3':
+            db_field = 'gender'
+        elif selected_column == '#4':
+            db_field = 'age'
+        elif selected_column == '#5':
+            db_field = 'pair'
+        
+        # Выполняем SQL-запрос для обновления данных в базе данных
+        cursor.execute(f'UPDATE Animals SET {db_field} = %s WHERE animalId = %s', (new_value, animal_id))
+        db_connector.commit()
+        
+        # Закрываем окно
+        edit_window.destroy()
+    
+    # Создаем кнопку для подтверждения изменений
+    submit_button = tk.Button(edit_window, text='Submit', command=submit)
+    submit_button.pack()
+
+# Привязываем функцию edit_item к событию двойного клика
+tree_anl.bind('<Double-1>', edit_item)
+
+
+def edit_item(event):
+    # Получаем выбранную строку
+    selected_item = tree_sup.selection()[0]
+    
+    # Создаем новое окно для ввода данных
+    edit_window = tk.Toplevel(window)
+    edit_window.title('Изменить данные')
+    
+    # Создаем поле для ввода нового значения
+    new_value_entry = tk.Entry(edit_window)
+    new_value_entry.pack()
+    
+    def submit():
+        # Получаем новое значение из поля ввода
+        new_value = new_value_entry.get()
+        
+        # Получаем выбранную колонку
+        selected_column = tree_sup.identify_column(event.x)
+        
+        # Изменяем значение в выбранной ячейке
+        tree_sup.set(selected_item, selected_column, new_value)
+        
+        # Получаем ID выбранного поставщика
+        suppliers_id = tree_sup.item(selected_item, 'text')
+        
+        # Определяем, какое поле в базе данных нужно обновить
+        db_field = ''
+        if selected_column == '#1':
+            db_field = 'organization_name'
+        elif selected_column == '#2':
+            db_field = 'type_of_feed'
+        elif selected_column == '#3':
+            db_field = 'period'
+        elif selected_column == '#4':
+            db_field = 'quantity'
+        elif selected_column == '#5':
+            db_field = 'price'
+        elif selected_column == '#6':
+            db_field = 'delivery_time'
+        
+        # Выполняем SQL-запрос для обновления данных в базе данных
+        cursor.execute(f'UPDATE Suppliers SET {db_field} = %s WHERE suppliersId = %s', (new_value, suppliers_id))
+        db_connector.commit()
+        
+        # Закрываем окно
+        edit_window.destroy()
+    
+    # Создаем кнопку для подтверждения изменений
+    submit_button = tk.Button(edit_window, text='Submit', command=submit)
+    submit_button.pack()
+
+# Привязываем функцию edit_item к событию двойного клика
+tree_sup.bind('<Double-1>', edit_item)
+
+
+def edit_item(event):
+    # Получаем выбранную строку
+    selected_item = tree_health.selection()[0]  # Используйте соответствующий объект treeview
+    
+    # Создаем новое окно для ввода данных
+    edit_window = tk.Toplevel(window)
+    edit_window.title('Изменить данные')
+    
+    # Создаем поле для ввода нового значения
+    new_value_entry = tk.Entry(edit_window)
+    new_value_entry.pack()
+    
+    def submit():
+        # Получаем новое значение из поля ввода
+        new_value = new_value_entry.get()
+        
+        # Получаем выбранную колонку
+        selected_column = tree_health.identify_column(event.x)  # Используйте соответствующий объект treeview
+        
+        # Изменяем значение в выбранной ячейке
+        tree_health.set(selected_item, selected_column, new_value)  # Используйте соответствующий объект treeview
+        
+        # Получаем ID выбранного элемента
+        health_id = tree_health.item(selected_item, 'text')  # Используйте соответствующий объект treeview
+        
+        # Определяем, какое поле в базе данных нужно обновить
+        db_field = ''
+        if selected_column == '#1':
+            db_field = 'animalId'
+        elif selected_column == '#2':
+            db_field = 'disease'
+        elif selected_column == '#3':
+            db_field = 'vaccination'
+        elif selected_column == '#4':
+            db_field = 'durationInZoo'
+        elif selected_column == '#5':
+            db_field = 'offspringCount'
+        
+        # Выполняем SQL-запрос для обновления данных в базе данных
+        cursor.execute(f'UPDATE AnimalHealth SET {db_field} = %s WHERE healthId = %s', (new_value, health_id))
+        db_connector.commit()
+        
+        # Закрываем окно
+        edit_window.destroy()
+    
+    # Создаем кнопку для подтверждения изменений
+    submit_button = tk.Button(edit_window, text='Submit', command=submit)
+    submit_button.pack()
+
+# Привязываем функцию edit_item к событию двойного клика
+tree_health.bind('<Double-1>', edit_item)  # Используйте соответствующий объект treeview
 
 
 current_mode = None  # переменная для отслеживания текущего режима
