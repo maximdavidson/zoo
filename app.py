@@ -5,10 +5,11 @@ import mysql.connector
 
 # Создание окна
 window = tk.Tk()
+window.withdraw()  # Скрываем основное окно при запуске
 window.resizable(width = False, height = False)
 window.title('Your ZOO')
 window.geometry('1200x520')
-window['bg'] = 'gray'
+window['bg'] = '#2F4F4F'
 
 
 # Подключение к базе данных
@@ -27,28 +28,75 @@ except mysql.connector.Error as err:
    print(f'Error: {err}')
    messagebox.showerror('Error')
 
+def login():
+    # Создаем окно для ввода данных
+    login_window = tk.Toplevel(window)
+    login_window.title('Войти в систему')
+    login_window.geometry('300x200')
+
+    # Добавляем поля для ввода имени пользователя и пароля
+    tk.Label(login_window, text='Имя пользователя:').grid(row=0, column=0, padx=10, pady=10)
+    username_entry = tk.Entry(login_window)
+    username_entry.grid(row=0, column=1)
+
+    tk.Label(login_window, text='Пароль:').grid(row=1, column=0, padx=10, pady=10)
+    password_entry = tk.Entry(login_window, show='*')
+    password_entry.grid(row=1, column=1)
+
+    def submit():
+        username = username_entry.get()
+        password = password_entry.get()
+
+        cursor.execute('SELECT * FROM Users WHERE username = %s AND password = %s', (username, password))
+        result = cursor.fetchone()
+
+        if result:
+            login_window.destroy()
+            window.deiconify()  # Показываем основное окно
+        else:
+            tk.messagebox.showinfo('Ошибка', 'Неверное имя пользователя или пароль.')
+            window.quit()  # Закрываем приложение
+
+    # Добавляем кнопку для отправки формы
+    tk.Button(login_window, text='Войти', command=submit).grid(row=2, column=1, pady=10)
+
+login()
+
+
 def add_employee():
-    # Создаем всплывающее окно для ввода данных
     input_window = tk.Toplevel(window)
     input_window.title('Добавить сотрудников')
-    input_window.geometry('300x200')
+    input_window.geometry('350x250')
 
     labels = ['Имя', 'Фамилия', 'Гендер', 'Возраст', 'Должность', 'Доступ к клетке', 'Категория', 'Зарплата']
     entries = []
 
     for i, label in enumerate(labels):
-        tk.Label(input_window, text=label).grid(row=i)
-        entries.append(tk.Entry(input_window))
-        entries[-1].grid(row=i, column=1)
+        tk.Label(input_window, text=label).grid(row=i, sticky='w')
+        if label in ['Гендер', 'Категория', 'Доступ к клетке']:
+            var = tk.StringVar(input_window)
+            if label == 'Гендер':
+                var.set('Мужчина')
+                w = ttk.Combobox(input_window, textvariable=var, values=['Мужчина', 'Женщина'], width=20)
+            elif label == 'Категория':
+                var.set('Полный рабочий день')
+                w = ttk.Combobox(input_window, textvariable=var, values=['Полный рабочий день', 'Неполный рабочий день', 'Сезонные', 'Временные', 'Контрактные'], width=20)
+            elif label == 'Доступ к клетке':
+                var.set('да') 
+                w = ttk.Combobox(input_window, textvariable=var, values=['да', 'нет'], width=20)
+            w.grid(row=i, column=1, sticky='w')
+            entries.append(var)
+        else:
+            entries.append(tk.Entry(input_window, width=20))
+            entries[-1].grid(row=i, column=1, sticky='w')
 
     def submit():
         employee_data = {label: entry.get() for label, entry in zip(labels, entries)}
 
         if not employee_data['Возраст'].isdigit() or not employee_data['Зарплата'].isdigit():
-         messagebox.showinfo('Ошибка', 'Возраст и зарплата должны быть числами.')
-         return
+            messagebox.showinfo('Ошибка', 'Возраст и зарплата должны быть числами.')
+            return
 
-        # Добавляем данные в базу данных
         cursor.execute('INSERT INTO Employee (firstName, lastName, gender, age, position, access, category, salary) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
                (employee_data['Имя'], employee_data['Фамилия'], employee_data['Гендер'], employee_data['Возраст'], employee_data['Должность'], employee_data['Доступ к клетке'], employee_data['Категория'], employee_data['Зарплата']))
         db_connector.commit()
@@ -56,33 +104,44 @@ def add_employee():
 
     tk.Button(input_window, text='Submit', command=submit).grid(row=len(labels), column=1)
 
-
 def add_animal():
     input_window = tk.Toplevel(window)
     input_window.title('Добавить животных')
-    input_window.geometry('300x200')
+    input_window.geometry('350x250')
 
     labels = ['Вид', 'Имя', 'Гендер', 'Возраст', 'Пара']
     entries = []
 
     for i, label in enumerate(labels):
-        tk.Label(input_window, text=label).grid(row=i)
-        entries.append(tk.Entry(input_window))
-        entries[-1].grid(row=i, column=1) 
+        tk.Label(input_window, text=label).grid(row=i, sticky='w')
+        if label in ['Вид', 'Пара']:
+            var = tk.StringVar(input_window)
+            if label == 'Вид':
+                var.set('Млекопитающие')
+                w = ttk.Combobox(input_window, textvariable=var, values=['Млекопитающие', 'Птицы', 'Рыбы', 'Рептилии', 'Амфибии', 'Насекомые', 'Моллюски', 'Членистоногие'], width=20)
+            elif label == 'Пара':
+                var.set('Да') 
+                w = ttk.Combobox(input_window, textvariable=var, values=['Да', 'Нет'], width=20)
+            w.grid(row=i, column=1, sticky='w')
+            entries.append(var)
+        else:
+            entries.append(tk.Entry(input_window, width=20))
+            entries[-1].grid(row=i, column=1, sticky='w')
 
     def submit():
         animal_data = {label: entry.get() for label, entry in zip(labels, entries)}
 
         if not animal_data['Возраст'].isdigit():
-         messagebox.showinfo('Ошибка', 'Возраст должен быть числом.')
-         return
-        
+            messagebox.showinfo('Ошибка', 'Возраст должен быть числом.')
+            return
+
         cursor.execute('INSERT INTO Animals (kind, name, gender, age, pair) VALUES (%s, %s, %s, %s, %s)',
-                (animal_data['Вид'], animal_data['Имя'], animal_data['Гендер'], animal_data['Возраст'], animal_data['Пара']))
+               (animal_data['Вид'], animal_data['Имя'], animal_data['Гендер'], animal_data['Возраст'], animal_data['Пара']))
         db_connector.commit()
         input_window.destroy()
-    
-    tk.Button(input_window, text='Submit', command=submit).grid(row = len(labels), column = 1)
+
+    tk.Button(input_window, text='Submit', command=submit).grid(row=len(labels), column=1)
+
 
 
 def add_animal_health():
@@ -124,32 +183,42 @@ def add_animal_health():
     tk.Button(input_window, text='Submit', command=submit).grid(row = len(labels) + 1, column = 1)
 
 
+import tkinter as tk
+from tkinter import ttk
+
 def add_suppliers():
     input_window = tk.Toplevel(window)
     input_window.title('Добавить поставщиков')
-    input_window.geometry('300x200')
+    input_window.geometry('350x250')
 
     labels = ['Имя', 'Тип корма', 'Период', 'Количество', 'Стоимость', 'Дата поставки']   
     entries = []
 
     for i, label in enumerate(labels):
-        tk.Label(input_window, text=label).grid(row=i)
-        entries.append(tk.Entry(input_window))
-        entries[-1].grid(row=i, column=1)
+        tk.Label(input_window, text=label).grid(row=i, sticky='w')
+        if label == 'Тип корма':
+            var = tk.StringVar(input_window)
+            var.set('Млекопитающие')
+            w = ttk.Combobox(input_window, textvariable=var, values=['Млекопитающие', 'Птицы', 'Рыбы', 'Рептилии', 'Амфибии', 'Насекомые', 'Моллюски', 'Членистоногие'])
+            w.grid(row=i, column=1, sticky='w')
+            entries.append(var)
+        else:
+            entries.append(tk.Entry(input_window))
+            entries[-1].grid(row=i, column=1, sticky='w')
 
     def submit():
         suppliers_data = {label: entry.get() for label, entry in zip(labels, entries)}
 
         if not (suppliers_data['Количество'].isdigit() and suppliers_data['Стоимость'].isdigit()):
-         messagebox.showinfo('Ошибка', 'Количество и стоимость должны быть числами.')
-         return
+            messagebox.showinfo('Ошибка', 'Количество и стоимость должны быть числами.')
+            return
     
         cursor.execute('INSERT INTO Suppliers (organization_name, type_of_feed, period, quantity, price, delivery_time) VALUE (%s,%s,%s,%s,%s,%s)',
                 (suppliers_data['Имя'], suppliers_data['Тип корма'], suppliers_data['Период'], suppliers_data['Количество'], suppliers_data['Стоимость'], suppliers_data['Дата поставки']))
         db_connector.commit()
         input_window.destroy()
 
-    tk.Button(input_window, text='Submit', command=submit).grid(row = len(labels), column = 1)
+    tk.Button(input_window, text='Submit', command=submit).grid(row=len(labels), column=1)
 
 
 def add_EmployeeAccess():
@@ -193,9 +262,9 @@ tree_emp.column('one', width=110, minwidth=110, stretch=tk.NO)
 tree_emp.column('two', width=110, minwidth=110, stretch=tk.NO)
 tree_emp.column('three', width=100, minwidth=100, stretch=tk.NO)
 tree_emp.column('four', width=60, minwidth=80, stretch=tk.NO)
-tree_emp.column('five', width=80, minwidth=80, stretch=tk.NO)
+tree_emp.column('five', width=150, minwidth=80, stretch=tk.NO)
 tree_emp.column('six', width=120, minwidth=80, stretch=tk.NO)
-tree_emp.column('seven', width=80, minwidth=80, stretch=tk.NO)
+tree_emp.column('seven', width=120, minwidth=80, stretch=tk.NO)
 tree_emp.column('eight', width=80, minwidth=80, stretch=tk.NO)
 
 tree_emp.heading('#0',text='ID',anchor=tk.W)
@@ -269,8 +338,8 @@ tree_sup.heading('six', text='Дата поставки',anchor=tk.W)
 tree_EA = ttk.Treeview(window)
 tree_EA['columns']=('one','two')
 tree_EA.column('#0', width=1, minwidth=1, stretch=tk.NO)
-tree_EA.column('one', width=150, minwidth=150, stretch=tk.NO)
-tree_EA.column('two', width=150, minwidth=150, stretch=tk.NO)
+tree_EA.column('one', width=200, minwidth=150, stretch=tk.NO)
+tree_EA.column('two', width=200, minwidth=150, stretch=tk.NO)
 
 tree_EA.heading('#0',text='ID',anchor=tk.W)
 tree_EA.heading('one', text='ID работника',anchor=tk.W)
@@ -362,6 +431,7 @@ def show_EmployeeAccess():
     for access in accesses:
         tree_EA.insert('', 0, text=access[0], value=(access[1], access[2], access[3], access[4]))
 
+    tree_EA.update()
     tree_EA.place(x=10, y=80)
     
     tree_sup.place_forget()
@@ -743,6 +813,23 @@ current_mode = None  # переменная для отслеживания те
 def set_mode(mode):
     global current_mode
     current_mode = mode
+    # Сброс цвета всех кнопок
+    btn_1.config(bg='snow')
+    btn_2.config(bg='snow')
+    btn_3.config(bg='snow')
+    btn_4.config(bg='snow')
+    btn_5.config(bg='snow')
+    # Изменение цвета выбранной кнопки
+    if mode == 'employee':
+        btn_1.config(bg='PaleGreen')
+    elif mode == 'animal':
+        btn_2.config(bg='PaleGreen')
+    elif mode == 'suppliers':
+        btn_3.config(bg='PaleGreen')
+    elif mode == 'health':
+        btn_4.config(bg='PaleGreen')
+    elif mode == 'EmployeeAccess':
+        btn_5.config(bg='PaleGreen')
 
 def set_mode_employee():
     set_mode('employee')
@@ -773,36 +860,34 @@ def add_data():
 
 
 # Горизонтальные кнопки
-btn_1 = tk.Button(window, text='Сотрудники', width='20', height='1', fg='black', bg='gray', command=lambda: (show_employees(), set_mode_employee()))
+btn_1 = tk.Button(window, text='Сотрудники', width='20', height='2', fg='black', bg='snow', bd=0, command=lambda: (show_employees(), set_mode_employee()))
 btn_1.place(x = 20, y = 10)
 
-btn_2 = tk.Button(window, text = 'Животные', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: (show_animals(), set_mode_animal()))
+btn_2 = tk.Button(window, text = 'Животные', width = '20', height = '2', fg = 'black', bg = 'snow', bd=0, command=lambda: (show_animals(), set_mode_animal()))
 btn_2.place(x = 200, y = 10)
 
-btn_3 = tk.Button(window, text = 'Поставщики', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: (show_suppliers(), set_mode_suppliers()))
+btn_3 = tk.Button(window, text = 'Поставщики', width = '20', height = '2', fg = 'black', bg = 'snow', bd=0, command=lambda: (show_suppliers(), set_mode_suppliers()))
 btn_3.place(x = 400, y = 10)
 
-btn_4 = tk.Button(window, text = 'Клинические данные', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: (show_animal_health(), set_mode_health()))
+btn_4 = tk.Button(window, text = 'Клинические данные', width = '20', height = '2', fg = 'black', bg = 'snow', bd=0, command=lambda: (show_animal_health(), set_mode_health()))
 btn_4.place(x = 600, y = 10)
 
-btn_5 = tk.Button(window, text = 'Доступ', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: (show_EmployeeAccess(), set_mode_EmployeeAccess()))
+btn_5 = tk.Button(window, text = 'Доступ', width = '20', height = '2', fg = 'black', bg = 'snow', bd=0, command=lambda: (show_EmployeeAccess(), set_mode_EmployeeAccess()))
 btn_5.place(x = 800, y = 10)
 
 
 # Вертикальные кнопки
-btn_add = tk.Button(window, text = 'Добавить', width = '20', height = '1', fg = 'black', bg = 'gray', command=add_data)
+btn_add = tk.Button(window, text = 'Добавить', width = '20', height = '2', fg = 'black', bg = 'snow', bd=0, command=add_data)
 btn_add.place(x = 1000, y = 20)
 
-btn_update = tk.Button(window, text='Обновить данные', width='20', height='1', fg='black', bg='gray', command=lambda: update_employee_table() if current_mode == 'employee' else (update_animal_table() if current_mode == 'animal' else (update_suppliers_table() if current_mode == 'suppliers' else (update_animal_health_table() if current_mode == 'health' else update_EmployeeAccess_table()))))
+btn_update = tk.Button(window, text='Обновить данные', width='20', height='2', fg='black', bg='snow', bd=0, command=lambda: update_employee_table() if current_mode == 'employee' else (update_animal_table() if current_mode == 'animal' else (update_suppliers_table() if current_mode == 'suppliers' else (update_animal_health_table() if current_mode == 'health' else update_EmployeeAccess_table()))))
 btn_update.place(x=1000, y=60)
 
-btn_clean = tk.Button(window, text = 'Удалить', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: delete_animal() if current_mode == 'animal' else (delete_employee() if current_mode == 'employee' else (delete_suppliers() if current_mode == 'suppliers' else (delete_health() if current_mode == 'health' else delete_EmployeeAccess()))))
+btn_clean = tk.Button(window, text = 'Удалить', width = '20', height = '2', fg = 'black', bg = 'snow', bd=0, command=lambda: delete_animal() if current_mode == 'animal' else (delete_employee() if current_mode == 'employee' else (delete_suppliers() if current_mode == 'suppliers' else (delete_health() if current_mode == 'health' else delete_EmployeeAccess()))))
 btn_clean.place(x = 1000, y = 100)
 
-btn_find = tk.Button(window, text = 'Искать', width = '20', height = '1', fg = 'black', bg = 'gray', command=lambda: search_employee() if current_mode == 'employee' else (search_animal() if current_mode == 'animal' else (search_suppliers() if current_mode == 'suppliers' else (search_health() if current_mode == 'health' else search_EmployeeAccess()))))
+btn_find = tk.Button(window, text = 'Искать', width = '20', height = '2', fg = 'black', bg = 'snow', bd=0, command=lambda: search_employee() if current_mode == 'employee' else (search_animal() if current_mode == 'animal' else (search_suppliers() if current_mode == 'suppliers' else (search_health() if current_mode == 'health' else search_EmployeeAccess()))))
 btn_find.place(x = 1000, y = 140)
-
-
 
 window.mainloop()
 cursor.close()
